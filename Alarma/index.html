@@ -3,67 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reloj con alarmas</title>
+    <title>Despertador web</title>
     <link rel="stylesheet" href="alarmas.css">
     <script src="alarmas.js" defer></script>
 </head>
 <body>
- 
-    <main class="app">
- 
+
+<div class="pagina">
+
+    <header class="encabezado">
+        <h1>⏰ Despertador</h1>
+        <a href="../index.html" class="enlace-volver">← Volver al CV</a>
+    </header>
+
+    <div class="rejilla">
+
         <!-- RELOJ -->
-        <section id="reloj" class="reloj">
-            <p id="diaActual" class="dia-actual"></p>
-            <p id="horaActual" class="hora-actual">00:00:00</p>
-            <p id="mensajeAlarma" class="mensaje-alarma" hidden></p>
-            <button id="btnDetener" class="boton detener" hidden>Detener alarma</button>
-        </section>
- 
-        <!-- FORMULARIO -->
-        <section class="panel">
-            <h2 id="tituloForm">Agregar alarma</h2>
- 
-            <div class="fila">
-                <label for="dia">Día</label>
-                <select id="dia">
-                    <option value="1">Lunes</option>
-                    <option value="2">Martes</option>
-                    <option value="3">Miércoles</option>
-                    <option value="4">Jueves</option>
-                    <option value="5">Viernes</option>
-                    <option value="6">Sábado</option>
-                    <option value="0">Domingo</option>
-                </select>
-            </div>
- 
-            <div class="fila">
-                <label for="hora">Hora</label>
-                <input type="time" id="hora">
-            </div>
- 
-            <div class="fila">
-                <label for="nombre">Nombre (opcional)</label>
-                <input type="text" id="nombre" maxlength="30" placeholder="Ej: Clases">
-            </div>
- 
-            <p id="error" class="error" hidden></p>
- 
-            <div class="botones">
-                <button id="btnGuardar" class="boton">Agregar alarma</button>
-                <button id="btnCancelar" class="boton secundario" hidden>Cancelar</button>
+        <section id="tarjetaReloj" class="tarjeta tarjeta-reloj">
+
+            <svg id="analogico" viewBox="0 0 200 200" role="img" aria-label="Reloj analógico">
+                <circle cx="100" cy="100" r="95" class="esfera"/>
+                <g id="marcas"></g>
+                <line id="manoHora" x1="100" y1="100" x2="100" y2="55" class="mano mano-hora"/>
+                <line id="manoMinuto" x1="100" y1="100" x2="100" y2="32" class="mano mano-minuto"/>
+                <line id="manoSegundo" x1="100" y1="112" x2="100" y2="24" class="mano mano-segundo"/>
+                <circle cx="100" cy="100" r="5" class="centro"/>
+            </svg>
+
+            <p id="horaDigital" class="digital">00:00:00</p>
+            <p id="fechaTexto" class="fecha-texto"></p>
+            <p id="proxima" class="proxima"></p>
+
+            <div id="avisoAlarma" class="aviso" hidden>
+                <p id="textoAviso" class="texto-aviso"></p>
+                <div class="aviso-botones">
+                    <button id="btnPosponer" class="btn btn-claro">Posponer 5 min</button>
+                    <button id="btnParar" class="btn btn-claro">Detener</button>
+                </div>
             </div>
         </section>
- 
-        <!-- LISTA -->
-        <section class="panel">
-            <h2>Mis alarmas</h2>
-            <ul id="lista" class="lista"></ul>
-            <p id="vacio" class="vacio">No hay alarmas todavía.</p>
-        </section>
- 
-        <a href="../index.html" class="volver">← Volver al CV</a>
- 
-    </main>
- 
+
+        <div class="columna">
+
+            <!-- NUEVA ALARMA -->
+            <section class="tarjeta">
+                <h2>Nueva alarma</h2>
+                <form id="formNueva" class="formulario">
+                    <label>Fecha
+                        <input type="date" id="inFecha" required>
+                    </label>
+                    <label>Hora
+                        <input type="time" id="inHora" required>
+                    </label>
+                    <label>Nombre (opcional)
+                        <input type="text" id="inNombre" maxlength="30" placeholder="Ej: Reunión">
+                    </label>
+                    <p id="msgError" class="msg-error" hidden></p>
+                    <button type="submit" class="btn btn-principal">Agregar alarma</button>
+                </form>
+            </section>
+
+            <!-- LISTA -->
+            <section class="tarjeta">
+                <h2>Alarmas programadas</h2>
+                <ul id="listaAlarmas" class="lista"></ul>
+                <p id="sinAlarmas" class="sin-alarmas">Aún no has agregado alarmas.</p>
+            </section>
+
+        </div>
+    </div>
+</div>
+
+<!-- VENTANA PARA EDITAR -->
+<dialog id="dlgEditar" class="dialogo">
+    <form id="formEditar" class="formulario">
+        <h2>Editar alarma</h2>
+        <label>Fecha
+            <input type="date" id="edFecha" required>
+        </label>
+        <label>Hora
+            <input type="time" id="edHora" required>
+        </label>
+        <label>Nombre
+            <input type="text" id="edNombre" maxlength="30">
+        </label>
+        <p id="edError" class="msg-error" hidden></p>
+        <div class="fila-botones">
+            <button type="button" id="btnCancelarEd" class="btn btn-gris">Cancelar</button>
+            <button type="submit" class="btn btn-principal">Guardar cambios</button>
+        </div>
+    </form>
+</dialog>
+
 </body>
 </html>

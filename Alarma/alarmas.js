@@ -1,226 +1,349 @@
-const NOMBRES_DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+"use strict";
+ 
+// ===== ESTADO =====
+const CLAVE_ALMACEN = "despertador.alarmas.v2";
 let alarmas = [];
-let idEditando = null;      // id de la alarma que se está editando (null = agregando)
-let alarmaSonando = false;
-let ultimoMinuto = "";      // evita repetir la misma alarma en el mismo minuto
-let audioCtx = null;
-let intervaloSonido = null;
+let alarmaSonando = null;     // alarma que está sonando ahora (o null)
+let temporizadorMelodia = null;
+let contextoAudio = null;
+let minutoRevisado = "";      // para no disparar dos veces en el mismo minuto
+let idEnEdicion = null;
  
-// ===== ELEMENTOS =====
-const reloj = document.getElementById("reloj");
-const horaActual = document.getElementById("horaActual");
-const diaActual = document.getElementById("diaActual");
-const mensajeAlarma = document.getElementById("mensajeAlarma");
-const btnDetener = document.getElementById("btnDetener");
-const selDia = document.getElementById("dia");
-const inpHora = document.getElementById("hora");
-const inpNombre = document.getElementById("nombre");
-const btnGuardar = document.getElementById("btnGuardar");
-const btnCancelar = document.getElementById("btnCancelar");
-const tituloForm = document.getElementById("tituloForm");
-const errorBox = document.getElementById("error");
-const lista = document.getElementById("lista");
-const vacio = document.getElementById("vacio");
+const $ = id => document.getElementById(id);
  
-// ===== GUARDAR / CARGAR =====
-function guardar() {
-    try { localStorage.setItem("alarmas", JSON.stringify(alarmas)); } catch (e) {}
+// ===== UTILIDADES DE FECHA =====
+const dos = n => String(n).padStart(2, "0");
+const claveFecha = d => d.getFullYear() + "-" + dos(d.getMonth() + 1) + "-" + dos(d.getDate());
+const claveHora = d => dos(d.getHours()) + ":" + dos(d.getMinutes());
+const fechaHoraDe = a => new Date(a.fecha + "T" + a.hora + ":00");
+ 
+function inicioDelMinutoActual() {
+    const d = new Date();
+    d.setSeconds(0, 0);
+    return d;
 }
  
-function cargar() {
+// ===== ALMACENAMIENTO =====
+function leerAlmacen() {
     try {
-        const datos = JSON.parse(localStorage.getItem("alarmas"));
-        if (Array.isArray(datos)) alarmas = datos;
+        const datos = JSON.parse(localStorage.getItem(CLAVE_ALMACEN));
+        return Array.isArray(datos) ? datos : [];
     } catch (e) {
-        alarmas = [];
+        return [];
     }
 }
  
-// ===== SONIDO (sin archivos externos) =====
-function iniciarAudio() {
-    if (!audioCtx) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (AC) audioCtx = new AC();
+function escribirAlmacen() {
+    try { localStorage.setItem(CLAVE_ALMACEN, JSON.stringify(alarmas)); } catch (e) {}
+}
+ 
+// ===== RELOJ ANALÓGICO =====
+function dibujarMarcas() {
+    const grupo = $("marcas");
+    const ns = "http://www.w3.org/2000/svg";
+    for (let i = 0; i < 12; i++) {
+        const linea = document.createElementNS(ns, "line");
+        linea.setAttribute("x1", "100");
+        linea.setAttribute("x2", "100");
+        linea.setAttribute("y1", "12");
+        linea.setAttribute("y2", i % 3 === 0 ? "26" : "20");
+        linea.setAttribute("transform", "rotate(" + i * 30 + " 100 100)");
+        linea.setAttribute("class", "marca");
+        grupo.appendChild(linea);
     }
-    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
 }
  
-function pitido() {
-    if (!audioCtx) return;
-    const osc = audioCtx.createOscillator();
-    const vol = audioCtx.createGain();
-    osc.type = "square";
-    osc.frequency.value = 880;
-    vol.gain.value = 0.15;
-    osc.connect(vol);
-    vol.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.25);
+function girar(idMano, grados) {
+    $(idMano).setAttribute("transform", "rotate(" + grados + " 100 100)");
 }
- 
-function iniciarSonido() {
-    pitido();
-    intervaloSonido = setInterval(pitido, 600);
-}
- 
-function detenerSonido() {
-    clearInterval(intervaloSonido);
-    intervaloSonido = null;
-}
- 
-// ===== ALARMA ACTIVA =====
-function activarAlarma(alarma) {
-    alarmaSonando = true;
-    reloj.classList.add("sonando");
-    mensajeAlarma.hidden = false;
-    mensajeAlarma.textContent = "⏰ ¡Alarma! " + (alarma.nombre || alarma.hora);
-    btnDetener.hidden = false;
-    iniciarSonido();
-}
- 
-function detenerAlarma() {
-    alarmaSonando = false;
-    reloj.classList.remove("sonando");
-    mensajeAlarma.hidden = true;
-    btnDetener.hidden = true;
-    detenerSonido();
-}
- 
-// ===== RELOJ =====
-function dos(n) { return String(n).padStart(2, "0"); }
  
 function actualizarReloj() {
     const ahora = new Date();
-    const h = dos(ahora.getHours());
-    const m = dos(ahora.getMinutes());
-    const s = dos(ahora.getSeconds());
+    const h = ahora.getHours() % 12;
+    const m = ahora.getMinutes();
+    const s = ahora.getSeconds();
  
-    horaActual.textContent = h + ":" + m + ":" + s;
-    diaActual.textContent = NOMBRES_DIAS[ahora.getDay()];
+    girar("manoHora", h * 30 + m * 0.5);
+    girar("manoMinuto", m * 6 + s * 0.1);
+    girar("manoSegundo", s * 6);
  
-    // Verificar si alguna alarma coincide con este momento
-    const claveMinuto = ahora.getDay() + "-" + h + ":" + m;
-    if (claveMinuto !== ultimoMinuto) {
-        ultimoMinuto = claveMinuto;
-        const coincide = alarmas.find(a => Number(a.dia) === ahora.getDay() && a.hora === h + ":" + m);
-        if (coincide && !alarmaSonando) activarAlarma(coincide);
-    }
+    $("horaDigital").textContent = dos(ahora.getHours()) + ":" + dos(m) + ":" + dos(s);
+    $("fechaTexto").textContent = ahora.toLocaleDateString("es-CR", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric"
+    });
+ 
+    revisarAlarmas(ahora);
 }
  
-// ===== LISTA =====
-function mostrarLista() {
-    lista.innerHTML = "";
-    vacio.hidden = alarmas.length > 0;
+// ===== REVISAR SI ALGUNA ALARMA COINCIDE =====
+function revisarAlarmas(ahora) {
+    const minuto = claveFecha(ahora) + " " + claveHora(ahora);
+    if (minuto === minutoRevisado) return;
+    minutoRevisado = minuto;
  
-    // ordenar por día (Lunes a Domingo) y luego por hora
-    const orden = d => (Number(d) + 6) % 7;
-    const ordenadas = [...alarmas].sort((a, b) =>
-        orden(a.dia) - orden(b.dia) || a.hora.localeCompare(b.hora));
+    const coincide = alarmas.find(a =>
+        a.activa && a.fecha === claveFecha(ahora) && a.hora === claveHora(ahora));
  
-    ordenadas.forEach(a => {
-        const li = document.createElement("li");
-        li.className = "alarma";
+    if (coincide && !alarmaSonando) comenzarAviso(coincide);
+    mostrarProxima();
+}
  
-        const datos = document.createElement("div");
-        datos.className = "datos";
-        const hora = document.createElement("strong");
-        hora.textContent = a.hora;
-        const detalle = document.createElement("span");
-        detalle.textContent = NOMBRES_DIAS[a.dia] + (a.nombre ? " · " + a.nombre : "");
-        datos.append(hora, detalle);
+// ===== SONIDO: pequeña melodía generada con Web Audio =====
+function prepararAudio() {
+    if (!contextoAudio) {
+        const Contexto = window.AudioContext || window.webkitAudioContext;
+        if (Contexto) contextoAudio = new Contexto();
+    }
+    if (contextoAudio && contextoAudio.state === "suspended") contextoAudio.resume();
+}
  
-        const acciones = document.createElement("div");
-        acciones.className = "acciones";
- 
-        const btnEditar = document.createElement("button");
-        btnEditar.className = "boton secundario pequeno";
-        btnEditar.textContent = "Editar";
-        btnEditar.addEventListener("click", () => editar(a.id));
- 
-        const btnBorrar = document.createElement("button");
-        btnBorrar.className = "boton peligro pequeno";
-        btnBorrar.textContent = "Borrar";
-        btnBorrar.addEventListener("click", () => borrar(a.id));
- 
-        acciones.append(btnEditar, btnBorrar);
-        li.append(datos, acciones);
-        lista.appendChild(li);
+function tocarMelodia() {
+    if (!contextoAudio) return;
+    const notas = [659.25, 783.99, 987.77, 783.99];
+    notas.forEach((frecuencia, i) => {
+        const inicio = contextoAudio.currentTime + i * 0.2;
+        const osc = contextoAudio.createOscillator();
+        const volumen = contextoAudio.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = frecuencia;
+        volumen.gain.setValueAtTime(0.25, inicio);
+        volumen.gain.exponentialRampToValueAtTime(0.001, inicio + 0.18);
+        osc.connect(volumen);
+        volumen.connect(contextoAudio.destination);
+        osc.start(inicio);
+        osc.stop(inicio + 0.2);
     });
 }
  
-// ===== AGREGAR / EDITAR / BORRAR =====
-function mostrarError(texto) {
-    errorBox.textContent = texto;
-    errorBox.hidden = !texto;
+// ===== ALARMA SONANDO =====
+function comenzarAviso(alarma) {
+    alarmaSonando = alarma;
+    $("tarjetaReloj").classList.add("sonando");
+    $("avisoAlarma").hidden = false;
+    $("textoAviso").textContent = "¡Alarma! " + (alarma.nombre || alarma.hora);
+    tocarMelodia();
+    temporizadorMelodia = setInterval(tocarMelodia, 1400);
 }
  
-function limpiarFormulario() {
-    idEditando = null;
-    inpNombre.value = "";
-    inpHora.value = "";
-    selDia.value = String(new Date().getDay());
-    tituloForm.textContent = "Agregar alarma";
-    btnGuardar.textContent = "Agregar alarma";
-    btnCancelar.hidden = true;
-    mostrarError("");
+function terminarAviso() {
+    clearInterval(temporizadorMelodia);
+    temporizadorMelodia = null;
+    $("tarjetaReloj").classList.remove("sonando");
+    $("avisoAlarma").hidden = true;
 }
  
-function guardarAlarma() {
-    iniciarAudio(); // el navegador exige un clic del usuario para permitir sonido
+function detenerAlarma() {
+    if (!alarmaSonando) return;
+    alarmaSonando.activa = false;   // ya cumplió su función
+    alarmaSonando = null;
+    terminarAviso();
+    escribirAlmacen();
+    pintarLista();
+    mostrarProxima();
+}
  
-    if (!inpHora.value) {
-        mostrarError("Selecciona la hora de la alarma.");
+function posponerAlarma() {
+    if (!alarmaSonando) return;
+    const nueva = new Date(fechaHoraDe(alarmaSonando).getTime() + 5 * 60000);
+    alarmaSonando.fecha = claveFecha(nueva);
+    alarmaSonando.hora = claveHora(nueva);
+    alarmaSonando = null;
+    terminarAviso();
+    escribirAlmacen();
+    pintarLista();
+    mostrarProxima();
+}
+ 
+// ===== PRÓXIMA ALARMA =====
+function mostrarProxima() {
+    const ahora = Date.now();
+    const futuras = alarmas
+        .filter(a => a.activa && fechaHoraDe(a).getTime() > ahora)
+        .sort((x, y) => fechaHoraDe(x) - fechaHoraDe(y));
+ 
+    $("proxima").textContent = futuras.length
+        ? "Próxima: " + futuras[0].fecha + " a las " + futuras[0].hora
+        : "Sin alarmas activas";
+}
+ 
+// ===== LISTA EN PANTALLA =====
+function pintarLista() {
+    const ul = $("listaAlarmas");
+    ul.innerHTML = "";
+    $("sinAlarmas").hidden = alarmas.length > 0;
+ 
+    const ordenadas = [...alarmas].sort((x, y) => fechaHoraDe(x) - fechaHoraDe(y));
+ 
+    ordenadas.forEach(a => {
+        const li = document.createElement("li");
+        li.className = "alarma" + (a.activa ? "" : " inactiva");
+ 
+        // interruptor
+        const etiqueta = document.createElement("label");
+        etiqueta.className = "interruptor";
+        const check = document.createElement("input");
+        check.type = "checkbox";
+        check.checked = a.activa;
+        check.dataset.accion = "alternar";
+        check.dataset.id = a.id;
+        const barra = document.createElement("span");
+        etiqueta.append(check, barra);
+ 
+        // información
+        const info = document.createElement("div");
+        info.className = "alarma-info";
+        const hora = document.createElement("strong");
+        hora.className = "alarma-hora";
+        hora.textContent = a.hora;
+        const detalle = document.createElement("span");
+        detalle.className = "alarma-detalle";
+        detalle.textContent = a.fecha + (a.nombre ? " · " + a.nombre : "");
+        info.append(hora, detalle);
+ 
+        // botones
+        const acciones = document.createElement("div");
+        acciones.className = "alarma-acciones";
+        const bEditar = document.createElement("button");
+        bEditar.className = "btn btn-gris btn-peque";
+        bEditar.textContent = "Editar";
+        bEditar.dataset.accion = "editar";
+        bEditar.dataset.id = a.id;
+        const bBorrar = document.createElement("button");
+        bBorrar.className = "btn btn-borrar btn-peque";
+        bBorrar.textContent = "Borrar";
+        bBorrar.dataset.accion = "borrar";
+        bBorrar.dataset.id = a.id;
+        acciones.append(bEditar, bBorrar);
+ 
+        li.append(etiqueta, info, acciones);
+        ul.appendChild(li);
+    });
+}
+ 
+// ===== AGREGAR =====
+function yaPaso(fecha, hora) {
+    return new Date(fecha + "T" + hora + ":00") < inicioDelMinutoActual();
+}
+ 
+function agregarAlarma(evento) {
+    evento.preventDefault();
+    prepararAudio();
+ 
+    const fecha = $("inFecha").value;
+    const hora = $("inHora").value;
+    const error = $("msgError");
+ 
+    if (!fecha || !hora) {
+        error.textContent = "Elige la fecha y la hora.";
+        error.hidden = false;
+        return;
+    }
+    if (yaPaso(fecha, hora)) {
+        error.textContent = "Esa fecha y hora ya pasaron.";
+        error.hidden = false;
         return;
     }
  
-    const datos = {
-        dia: Number(selDia.value),
-        hora: inpHora.value,
-        nombre: inpNombre.value.trim()
-    };
+    error.hidden = true;
+    alarmas.push({
+        id: Date.now(),
+        fecha: fecha,
+        hora: hora,
+        nombre: $("inNombre").value.trim(),
+        activa: true
+    });
  
-    if (idEditando === null) {
-        alarmas.push({ id: Date.now(), ...datos });
-    } else {
-        const a = alarmas.find(x => x.id === idEditando);
-        if (a) Object.assign(a, datos);
-    }
- 
-    guardar();
-    mostrarLista();
-    limpiarFormulario();
-    ultimoMinuto = ""; // permite que una alarma nueva para este minuto suene
+    escribirAlmacen();
+    pintarLista();
+    $("inHora").value = "";
+    $("inNombre").value = "";
+    minutoRevisado = "";          // para que una alarma del minuto actual sí suene
+    mostrarProxima();
 }
  
-function editar(id) {
+// ===== EDITAR =====
+function abrirEdicion(id) {
     const a = alarmas.find(x => x.id === id);
     if (!a) return;
-    idEditando = id;
-    selDia.value = String(a.dia);
-    inpHora.value = a.hora;
-    inpNombre.value = a.nombre;
-    tituloForm.textContent = "Editar alarma";
-    btnGuardar.textContent = "Guardar cambios";
-    btnCancelar.hidden = false;
-    mostrarError("");
-    inpHora.focus();
+    idEnEdicion = id;
+    $("edFecha").value = a.fecha;
+    $("edHora").value = a.hora;
+    $("edNombre").value = a.nombre;
+    $("edError").hidden = true;
+    $("dlgEditar").showModal();
 }
  
-function borrar(id) {
+function guardarEdicion(evento) {
+    evento.preventDefault();
+    const a = alarmas.find(x => x.id === idEnEdicion);
+    if (!a) return;
+ 
+    const fecha = $("edFecha").value;
+    const hora = $("edHora").value;
+ 
+    if (yaPaso(fecha, hora)) {
+        $("edError").textContent = "Esa fecha y hora ya pasaron.";
+        $("edError").hidden = false;
+        return;
+    }
+ 
+    a.fecha = fecha;
+    a.hora = hora;
+    a.nombre = $("edNombre").value.trim();
+    a.activa = true;
+ 
+    escribirAlmacen();
+    pintarLista();
+    $("dlgEditar").close();
+    minutoRevisado = "";
+    mostrarProxima();
+}
+ 
+// ===== BORRAR / ACTIVAR =====
+function borrarAlarma(id) {
     alarmas = alarmas.filter(a => a.id !== id);
-    if (idEditando === id) limpiarFormulario();
-    guardar();
-    mostrarLista();
+    escribirAlmacen();
+    pintarLista();
+    mostrarProxima();
 }
  
-// ===== EVENTOS E INICIO =====
-btnGuardar.addEventListener("click", guardarAlarma);
-btnCancelar.addEventListener("click", limpiarFormulario);
-btnDetener.addEventListener("click", detenerAlarma);
-document.addEventListener("click", iniciarAudio);
+function alternarAlarma(id, valor) {
+    const a = alarmas.find(x => x.id === id);
+    if (a) a.activa = valor;
+    escribirAlmacen();
+    pintarLista();
+    minutoRevisado = "";
+    mostrarProxima();
+}
  
-cargar();
-mostrarLista();
-limpiarFormulario();
+// ===== EVENTOS =====
+$("listaAlarmas").addEventListener("click", e => {
+    const boton = e.target.closest("button");
+    if (!boton) return;
+    const id = Number(boton.dataset.id);
+    if (boton.dataset.accion === "editar") abrirEdicion(id);
+    if (boton.dataset.accion === "borrar") borrarAlarma(id);
+});
+ 
+$("listaAlarmas").addEventListener("change", e => {
+    if (e.target.dataset.accion === "alternar") {
+        alternarAlarma(Number(e.target.dataset.id), e.target.checked);
+    }
+});
+ 
+$("formNueva").addEventListener("submit", agregarAlarma);
+$("formEditar").addEventListener("submit", guardarEdicion);
+$("btnCancelarEd").addEventListener("click", () => $("dlgEditar").close());
+$("btnParar").addEventListener("click", detenerAlarma);
+$("btnPosponer").addEventListener("click", posponerAlarma);
+document.addEventListener("click", prepararAudio);
+ 
+// ===== INICIO =====
+alarmas = leerAlmacen();
+dibujarMarcas();
+$("inFecha").value = claveFecha(new Date());
+$("inFecha").min = claveFecha(new Date());
+pintarLista();
+mostrarProxima();
 actualizarReloj();
 setInterval(actualizarReloj, 1000);
