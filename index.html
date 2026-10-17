@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi CV Profesional</title>
+    <link rel="stylesheet" href="estilos.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+
+    <div class="cv-container">
+
+        <!-- BARRA LATERAL -->
+        <aside class="sidebar">
+
+            <div class="perfil">
+                <div class="avatar">SM</div>
+                <h1>Sebastián Montoya Barboza</h1>
+                <p>Programador y Diseñador Web</p>
+            </div>
+
+            <section class="sidebar-section">
+                <h2>Contacto</h2>
+                <p>7057-9142</p>
+                <p>montoyabarbozas@gmail.com</p>
+                <p>San Blas, Cartago</p>
+            </section>
+
+            <section class="sidebar-section">
+                <h2>Habilidades</h2>
+                <ul>
+                    <li>Atención al cliente</li>
+                    <li>Comunicación efectiva</li>
+                    <li>Organización y puntualidad</li>
+                    <li>Trabajo en equipo</li>
+                    <li>Adaptabilidad</li>
+                    <li>Toma de decisiones</li>
+                </ul>
+            </section>
+
+            <section class="sidebar-section">
+                <h2>Lenguajes</h2>
+
+                <div class="lenguaje">
+                    <span>C#</span>
+                    <div class="barra"><div class="nivel n1"></div></div>
+                </div>
+
+                <div class="lenguaje">
+                    <span>Java</span>
+                    <div class="barra"><div class="nivel n2"></div></div>
+                </div>
+
+                <div class="lenguaje">
+                    <span>Python</span>
+                    <div class="barra"><div class="nivel n3"></div></div>
+                </div>
+
+                <div class="lenguaje">
+                    <span>HTML / CSS / JavaScript</span>
+                    <div class="barra"><div class="nivel n4"></div></div>
+                </div>
+            </section>
+
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="contenido">
+
+            <section class="bloque">
+                <h2>Perfil profesional</h2>
+                <p>
+                    Estudiante de Tecnologías de la Información con habilidades
+                    en atención al cliente, comunicación efectiva y adaptabilidad.
+                    Me destaco por mi responsabilidad, organización y capacidad
+                    para trabajar en equipo. Busco una oportunidad laboral que
+                    me permita crecer profesionalmente y aplicar mis conocimientos.
+                </p>
+            </section>
+
+            <section class="bloque">
+                <h2>Formación académica</h2>
+
+                <div class="item">
+                    <span class="fecha">2019 - 2023</span>
+                    <h3>Bachillerato en Educación Media</h3>
+                    <p>Liceo Vicente Lachner Sandoval</p>
+                </div>
+
+                <div class="item">
+                    <span class="fecha">2024 - Actualidad</span>
+                    <h3>Tecnologías de la Información</h3>
+                    <p>Colegio Universitario de Cartago (CUC)</p>
+                </div>
+            </section>
+
+            <section class="bloque">
+                <h2>Proyectos académicos</h2>
+
+                <div class="proyectos">
+
+                    <article class="proyecto tarjeta-azul">
+                        <span class="numero">PROYECTO 01</span>
+                        <h3>TI Soluciones e Innovación Tecnológica</h3>
+                        <p>
+                            Sitio web corporativo para una empresa de soluciones
+                            tecnológicas. Presenta la empresa, sus servicios, proyectos,
+                            clientes, planes, equipo de trabajo y noticias.
+                        </p>
+                        <p class="tecnologias">Python · SQL Server</p>
+                        <a href="proyecto1.html" class="boton">
+                            Ver proyecto →
+                        </a>
+                    </article>
+
+                    <article class="proyecto tarjeta-roja">
+                        <span class="numero">PROYECTO 02</span>
+                        <h3>AeroTicket</h3>
+                        <p>
+                            Aplicación académica para administrar información
+                            relacionada con aerolíneas, países, ciudades y vuelos.
+                        </p>
+                        <p class="tecnologias">C# · SQL Server</p>
+                        <a href="proyecto2.html" class="boton">
+                            Ver proyecto →
+                        </a>
+                    </article>
+
+                </div>
+            </section>
+
+            <section class="bloque contacto">
+                <button id="botonContacto"
+                        class="boton-contacto"
+                        aria-expanded="false"
+                        aria-controls="opcionesContacto">
+                    Formas de contacto
+                    <span id="flecha">＋</span>
+                </button>
+
+                <div id="opcionesContacto" hidden>
+                    <a href="mailto:montoyabarbozas@gmail.com">
+                        Enviar correo electrónico
+                    </a>
+
+                    <a href="tel:+50670579142">
+                        Llamar por teléfono
+                    </a>
+
+                    <a href="https://github.com/" target="_blank"
+                       rel="noopener noreferrer">
+                        Visitar GitHub
+                    </a>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <footer>
+        <p>© 2026 Sebastián Montoya · CV profesional</p>
+    </footer>
+
+</body>
+</html>
