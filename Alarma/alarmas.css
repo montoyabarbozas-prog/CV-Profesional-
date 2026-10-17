@@ -1,0 +1,182 @@
+* { box-sizing: border-box; }
+ 
+body {
+    margin: 0;
+    padding: 25px;
+    background-color: #160d19;
+    color: #eeeeee;
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+ 
+.app {
+    max-width: 600px;
+    margin: 0 auto;
+}
+ 
+/* RELOJ */
+.reloj {
+    padding: 30px 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    background-color: #075477;
+    border: 1px solid #555555;
+    border-radius: 12px;
+    box-shadow: 0 10px 35px #00000055;
+    transition: background-color 0.3s;
+}
+ 
+.dia-actual {
+    margin: 0;
+    color: #bceaff;
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+ 
+.hora-actual {
+    margin: 5px 0;
+    color: white;
+    font-size: 56px;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+}
+ 
+.mensaje-alarma {
+    margin: 5px 0 10px;
+    font-size: 18px;
+    font-weight: bold;
+}
+ 
+/* RELOJ CON ALARMA ACTIVA */
+.reloj.sonando {
+    background-color: #c0283c;
+    animation: parpadeo 0.6s infinite alternate;
+}
+ 
+@keyframes parpadeo {
+    from { background-color: #c0283c; }
+    to   { background-color: #ff6b3d; }
+}
+ 
+/* PANELES */
+.panel {
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #252525;
+    border: 1px solid #555555;
+    border-radius: 10px;
+}
+ 
+.panel h2 {
+    margin-top: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #555555;
+    color: #70d6ff;
+    font-size: 21px;
+}
+ 
+.fila {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 14px;
+}
+ 
+label {
+    margin-bottom: 4px;
+    color: #bceaff;
+    font-size: 13px;
+}
+ 
+select, input {
+    padding: 10px;
+    border: 1px solid #555555;
+    border-radius: 5px;
+    background-color: #1c1c1c;
+    color: white;
+    font-size: 16px;
+}
+ 
+select:focus, input:focus {
+    outline: 2px solid #70d6ff;
+}
+ 
+.error {
+    color: #ff8a8a;
+    font-size: 14px;
+}
+ 
+/* BOTONES */
+.botones { display: flex; gap: 10px; flex-wrap: wrap; }
+ 
+.boton {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #087ba5;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+ 
+.boton:hover { background-color: #0b9acb; }
+ 
+.boton.secundario { background-color: #414141; }
+.boton.secundario:hover { background-color: #575757; }
+ 
+.boton.peligro { background-color: #a6303f; }
+.boton.peligro:hover { background-color: #c43a4b; }
+ 
+.boton.detener {
+    background-color: white;
+    color: #c0283c;
+}
+ 
+.boton.pequeno { padding: 6px 12px; font-size: 13px; }
+ 
+/* LISTA */
+.lista { margin: 0; padding: 0; list-style: none; }
+ 
+.alarma {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px;
+    margin-bottom: 10px;
+    background-color: #303030;
+    border-left: 4px solid #0784ad;
+    border-radius: 6px;
+}
+ 
+.alarma.activa { border-left-color: #ff4d5e; }
+ 
+.alarma .datos strong {
+    display: block;
+    font-size: 22px;
+    color: white;
+}
+ 
+.alarma .datos span {
+    color: #bceaff;
+    font-size: 13px;
+}
+ 
+.alarma .acciones { display: flex; gap: 8px; }
+ 
+.vacio { color: #aaaaaa; text-align: center; }
+ 
+.volver {
+    display: inline-block;
+    color: #70d6ff;
+    font-size: 14px;
+    text-decoration: none;
+}
+ 
+@media (max-width: 500px) {
+    body { padding: 12px; }
+    .hora-actual { font-size: 42px; }
+}

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reloj con alarmas</title>
+    <link rel="stylesheet" href="alarmas.css">
+    <script src="alarmas.js" defer></script>
+</head>
+<body>
+ 
+    <main class="app">
+ 
+        <!-- RELOJ -->
+        <section id="reloj" class="reloj">
+            <p id="diaActual" class="dia-actual"></p>
+            <p id="horaActual" class="hora-actual">00:00:00</p>
+            <p id="mensajeAlarma" class="mensaje-alarma" hidden></p>
+            <button id="btnDetener" class="boton detener" hidden>Detener alarma</button>
+        </section>
+ 
+        <!-- FORMULARIO -->
+        <section class="panel">
+            <h2 id="tituloForm">Agregar alarma</h2>
+ 
+            <div class="fila">
+                <label for="dia">Día</label>
+                <select id="dia">
+                    <option value="1">Lunes</option>
+                    <option value="2">Martes</option>
+                    <option value="3">Miércoles</option>
+                    <option value="4">Jueves</option>
+                    <option value="5">Viernes</option>
+                    <option value="6">Sábado</option>
+                    <option value="0">Domingo</option>
+                </select>
+            </div>
+ 
+            <div class="fila">
+                <label for="hora">Hora</label>
+                <input type="time" id="hora">
+            </div>
+ 
+            <div class="fila">
+                <label for="nombre">Nombre (opcional)</label>
+                <input type="text" id="nombre" maxlength="30" placeholder="Ej: Clases">
+            </div>
+ 
+            <p id="error" class="error" hidden></p>
+ 
+            <div class="botones">
+                <button id="btnGuardar" class="boton">Agregar alarma</button>
+                <button id="btnCancelar" class="boton secundario" hidden>Cancelar</button>
+            </div>
+        </section>
+ 
+        <!-- LISTA -->
+        <section class="panel">
+            <h2>Mis alarmas</h2>
+            <ul id="lista" class="lista"></ul>
+            <p id="vacio" class="vacio">No hay alarmas todavía.</p>
+        </section>
+ 
+        <a href="../index.html" class="volver">← Volver al CV</a>
+ 
+    </main>
+ 
+</body>
+</html>
